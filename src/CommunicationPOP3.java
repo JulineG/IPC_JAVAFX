@@ -1,3 +1,4 @@
+import javax.net.ssl.SSLSocket;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -6,7 +7,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 
 public class CommunicationPOP3 implements Runnable {
-    private Socket sComm;
+    private SSLSocket sComm;
     private BufferedInputStream bis;
     private BufferedWriter bw;
     private boolean connected = false;
@@ -15,8 +16,13 @@ public class CommunicationPOP3 implements Runnable {
     private boolean isConnected = false;
 
 
-    public CommunicationPOP3(Socket s){
+    public CommunicationPOP3(SSLSocket s){
         this.sComm =s;
+        try {
+            s.startHandshake();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         System.out.println("new client");
         System.out.println(s.getInetAddress());
 
@@ -33,47 +39,6 @@ public class CommunicationPOP3 implements Runnable {
     }
 
 
-
-/*
-    public void sendResponseOK(String filename){
-        try{
-            String[] ct=contentType(filename);
-            bw.write("HTTP/1.1 200 OK\r\n");
-            bw.write("Content-Type: "+ct[0]+ct[1]+"\r\n");
-            bw.write("\r\n");
-
-            //lecture fichier texte
-            if(ct[0].equals("image") || ct[0].equals("text")) {
-                InputStream flux = new FileInputStream(Server.getFolder() + filename);
-                InputStreamReader lecture = new InputStreamReader(flux);
-                BufferedReader buff = new BufferedReader(lecture);
-                String textline;
-                while ((textline = buff.readLine()) != null) {
-                    bw.write(textline + "\r\n");
-                    System.out.println(textline);
-                }
-                buff.close();
-            }
-
-            /*else if(ct[0].equals("")){
-                File img = new File(Server.getFolder()+filename);
-                BufferedImage bufferedImage = ImageIO.read(img);
-                WritableRaster raster = bufferedImage .getRaster();
-                DataBufferByte data   = (DataBufferByte) raster.getDataBuffer();
-                System.out.println(data.getData().length);
-                for(int i=0;i<data.getData().length;i++){
-                    bw.write(data.getData()[i]);
-                    System.out.println(data.getData()[i]);
-                }
-            }
-
-            bw.flush();
-        }
-        catch (Exception e){
-            System.out.println(e.getMessage());
-        }
-    }
-*/
     public boolean readBuffer(){
         ArrayList<ArrayList<String>> tab=new ArrayList<>();
         ArrayList<String> contenu = new ArrayList<>();

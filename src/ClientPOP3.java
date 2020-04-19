@@ -1,3 +1,5 @@
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 import java.io.BufferedInputStream;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -13,20 +15,28 @@ public class ClientPOP3 {
 
     private BufferedWriter bw;
     private BufferedInputStream br;
-    private Socket sClient;
+    private SSLSocket sClient;
     private String timestamp;
 
 
 
     public ClientPOP3(String nomServ, int port){
         try{
-
-            sClient = new Socket(InetAddress.getByName(nomServ), port);
+            SSLSocketFactory factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+            sClient = (SSLSocket) factory.createSocket(InetAddress.getByName(nomServ), port);
+            String[] suites = sClient.getSupportedCipherSuites();
+            ArrayList<String> anon_suites = new ArrayList<>();
+            for (int i = 0; i < suites.length; i++) {
+                if (suites[i].contains("anon")) { anon_suites.add(suites[i]);}
+            }
+            sClient.setEnabledCipherSuites(anon_suites.toArray(new String[anon_suites.size()]));
+            sClient.setEnabledProtocols(sClient.getSupportedProtocols());
             System.out.println("Connexion réussie sur le serveur : " + nomServ);
             bw = new BufferedWriter(new OutputStreamWriter(sClient.getOutputStream(), StandardCharsets.UTF_8));
             br = new BufferedInputStream(sClient.getInputStream());
         }catch (Exception e){
             System.out.println("ERROR : connection failed");
+            e.printStackTrace();
         }
     }
 

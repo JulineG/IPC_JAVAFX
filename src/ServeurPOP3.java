@@ -1,3 +1,6 @@
+import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLServerSocketFactory;
+import javax.net.ssl.SSLSocket;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
@@ -9,7 +12,7 @@ import java.util.ArrayList;
 public class ServeurPOP3 {
 
     public final int PORT = 8000;
-    public ServerSocket ss;
+    public SSLServerSocket ss;
     public BufferedReader in;
     public PrintStream out;
     public Socket comm;
@@ -36,7 +39,15 @@ public class ServeurPOP3 {
 
         public ServeurPOP3(int port){
             try {
-                ss=new ServerSocket(port);
+                SSLServerSocketFactory factory = (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
+                ss = (SSLServerSocket) factory.createServerSocket(port);
+                String[] suites = ss.getSupportedCipherSuites();
+                ArrayList<String> anon_suites = new ArrayList<>();
+                for (int i = 0; i < suites.length; i++) {
+                    if (suites[i].contains("anon")) { anon_suites.add(suites[i]);}
+                }
+                ss.setEnabledCipherSuites(anon_suites.toArray(new String[anon_suites.size()]));
+                ss.setEnabledProtocols(ss.getSupportedProtocols());
             } catch (IOException e) {
                 System.out.println(e.getMessage());
             }
@@ -46,7 +57,7 @@ public class ServeurPOP3 {
             try {
                 while(true) {
                     System.out.println("waiting for clients...");
-                    CommunicationPOP3 c = new CommunicationPOP3(ss.accept());
+                    CommunicationPOP3 c = new CommunicationPOP3((SSLSocket)ss.accept());
                     //wait for opensuccess
                     new Thread(c).start();
                 }
